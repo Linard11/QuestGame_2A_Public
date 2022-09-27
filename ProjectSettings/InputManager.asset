@@ -327,7 +327,7 @@ InputManager:
     joyNum: 0
   - serializedVersion: 3
     m_Name: Debug Reset
-    descriptiveName: 
+    descriptiveName: flag
     descriptiveNegativeName: 
     negativeButton: 
     positiveButton: left alt
@@ -485,3 +485,4 @@ InputManager:
     type: 2
     axis: 5
     joyNum: 0
+  m_UsePhysicalKeys: 0
