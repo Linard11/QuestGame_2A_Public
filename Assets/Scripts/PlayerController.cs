@@ -3,6 +3,9 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
+    private static readonly int MovementSpeed = Animator.StringToHash("MovementSpeed");
+    private static readonly int Grounded = Animator.StringToHash("Grounded");
+    
     #region Inspector
 
     [Header("Movement")]
@@ -58,6 +61,11 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Invert Y-axis for controller.")]
     [SerializeField] private bool invertY = true;
 
+    [Header("Animations")]
+
+    [Tooltip("Animator of the character mesh.")]
+    [SerializeField] private Animator animator;
+
     #endregion
 
     private CharacterController characterController;
@@ -72,6 +80,7 @@ public class PlayerController : MonoBehaviour
     private Quaternion characterTargetRotation = Quaternion.identity;
     private Vector2 cameraRotation;
     private Vector3 lastMovement;
+
 
     #region Unity Events Functions
 
@@ -98,6 +107,8 @@ public class PlayerController : MonoBehaviour
 
         Rotate(moveInput);
         Move(moveInput);
+        
+        UpdateAnimator();
     }
 
     private void LateUpdate()
@@ -248,5 +259,19 @@ public class PlayerController : MonoBehaviour
         return lookAction.activeControl.name == "delta";
     }
     
+    #endregion
+
+    #region Animator
+
+    private void UpdateAnimator()
+    {
+        Vector3 velocity = lastMovement;
+        velocity.y = 0;
+        float speed = velocity.magnitude;
+
+        animator.SetFloat(MovementSpeed, speed);
+        animator.SetBool(Grounded, characterController.isGrounded);
+    }
+
     #endregion
 }
