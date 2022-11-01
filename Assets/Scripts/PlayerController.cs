@@ -22,6 +22,19 @@ public class PlayerController : MonoBehaviour
     [Tooltip("How fast the character rotates around it's y-axis.")]
     [SerializeField] private float rotationSpeed = 10f;
     
+    [Header("Slope Movement")]
+    
+    [Min(0)]
+    [Tooltip("How much additional gravity force to apply while walking down a slope. In uu/s.")]
+    [SerializeField] private float pullDownForce = 5f;
+
+    [Tooltip("Layer mask used for the raycast.")]
+    [SerializeField] private LayerMask layerMask;
+
+    [Min(0)]
+    [Tooltip("Length of the raycast for checking for slopes in uu.")]
+    [SerializeField] private float raycastLength = 0.5f;
+    
     [Header("Camera")]
 
     [Tooltip("The focus and rotation point of the camera.")]
@@ -66,6 +79,10 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Animator of the character mesh.")]
     [SerializeField] private Animator animator;
 
+    [Min(0)]
+    [Tooltip("Time in sec the character has to be in the air before the animator reacts.")]
+    [SerializeField] private float coyoteTime = 0.2f;
+
     #endregion
 
     private CharacterController characterController;
@@ -81,6 +98,10 @@ public class PlayerController : MonoBehaviour
     private Vector2 cameraRotation;
     private Vector3 lastMovement;
 
+    private bool isGrounded = true;
+    private float airTime;
+
+    private Interactable selectedInteractable;
 
     #region Unity Events Functions
 
@@ -93,7 +114,8 @@ public class PlayerController : MonoBehaviour
         lookAction = input.Player.Look;
         moveAction = input.Player.Move;
 
-        // TODO Subscribe to input events.
+        // Subscribe to input events.
+        input.Player.Interact.performed += Interact;
     }
 
     private void OnEnable()
@@ -107,6 +129,8 @@ public class PlayerController : MonoBehaviour
 
         Rotate(moveInput);
         Move(moveInput);
+        
+        CheckGround();
         
         UpdateAnimator();
     }
@@ -123,8 +147,23 @@ public class PlayerController : MonoBehaviour
 
     private void OnDestroy()
     {
-        // TODO Unsubscribe from input events.
+        // Unsubscribe from input events.
+        input.Player.Interact.performed -= Interact;
     }
+
+    #region Physics
+
+    private void OnTriggerEnter(Collider other)
+    {
+        TrySelectInteractable(other);
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        TryDeselectInteractable(other);
+    }
+
+    #endregion
 
     #endregion
 
@@ -190,6 +229,33 @@ public class PlayerController : MonoBehaviour
         characterController.SimpleMove(movement);
 
         lastMovement = movement;
+
+        if (Physics.Raycast(transform.position + Vector3.up * 0.01f, Vector3.down, out RaycastHit hit,
+                            raycastLength, layerMask, QueryTriggerInteraction.Ignore))
+        {
+            if (Vector3.ProjectOnPlane(movement, hit.normal).y < 0)
+            {
+                characterController.Move(Vector3.down * (pullDownForce * Time.deltaTime));
+            }
+        }
+    }
+
+    #endregion
+
+    #region Ground Check
+
+    private void CheckGround()
+    {
+        if (characterController.isGrounded)
+        {
+            airTime = 0;
+        }
+        else
+        {
+            airTime += Time.deltaTime;
+        }
+
+        isGrounded = airTime < coyoteTime;
     }
 
     #endregion
@@ -270,7 +336,48 @@ public class PlayerController : MonoBehaviour
         float speed = velocity.magnitude;
 
         animator.SetFloat(MovementSpeed, speed);
-        animator.SetBool(Grounded, characterController.isGrounded);
+        animator.SetBool(Grounded, isGrounded);
+    }
+
+    #endregion
+
+    #region Interation
+
+    private void Interact(InputAction.CallbackContext _)
+    {
+        if (selectedInteractable != null)
+        {
+            selectedInteractable.Interact();
+        }
+    }
+
+    private void TrySelectInteractable(Collider other)
+    {
+        Interactable interactable = other.GetComponent<Interactable>();
+
+        if (interactable == null) { return; }
+
+        if (selectedInteractable != null)
+        {
+            selectedInteractable.Deselect();
+        }
+        
+        selectedInteractable = interactable;
+        selectedInteractable.Select();
+    }
+    
+    private void TryDeselectInteractable(Collider other)
+    {
+        Interactable interactable = other.GetComponent<Interactable>();
+
+        if (interactable == null) { return; }
+
+        // Only deselect the selected Interactable.
+        if (interactable == selectedInteractable)
+        {
+            selectedInteractable.Deselect();
+            selectedInteractable = null;
+        }
     }
 
     #endregion
