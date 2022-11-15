@@ -1,15 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using Ink;
 using Ink.Runtime;
 
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class DialogueController : MonoBehaviour
 {
+    private const string SpeakerSeparator = ":";
+    private const string EscapedColon = "::";
+    private const string EscapedColonPlaceholder = "$";
+
     public static event Action DialogueOpened;
     public static event Action DialogueClosed;
+    public static event Action<string> InkEvent;
     
     #region Inspector
 
@@ -32,6 +39,7 @@ public class DialogueController : MonoBehaviour
         // Initialize Ink.
         inkStory = new Story(inkAsset.text);
         inkStory.onError += OnInkError;
+        inkStory.BindExternalFunction<string>("Unity_Event", Unity_Event);
     }
 
     private void OnEnable()
@@ -80,8 +88,10 @@ public class DialogueController : MonoBehaviour
     private void CloseDialogue()
     {
         dialogueBox.gameObject.SetActive(false);
-        // TODO Clean up
         
+        // Deselect everything in the UI.
+        EventSystem.current.SetSelectedGameObject(null);
+
         DialogueClosed?.Invoke();
     }
 
@@ -93,17 +103,21 @@ public class DialogueController : MonoBehaviour
             return;
         }
 
-        DialogueLine line = new DialogueLine();
+        DialogueLine line;
         if (CanContinue())
         {
             string inkLine = inkStory.Continue();
             // Skip empty lines.
-            if (inkLine == String.Empty)
+            if (string.IsNullOrWhiteSpace(inkLine))
             {
                 ContinueDialogue();
+                return;
             }
-            // TODO Parse text.
-            line.text = inkLine;
+            line = ParseText(inkLine, inkStory.currentTags);
+        }
+        else
+        {
+            line = new DialogueLine();
         }
 
         line.choices = inkStory.currentChoices;
@@ -130,6 +144,46 @@ public class DialogueController : MonoBehaviour
     #endregion
 
     #region Ink
+
+    private DialogueLine ParseText(string inkLine, List<string> tags)
+    {
+        // Replace :: with $ a placeholder to prevent splitting.
+        inkLine = inkLine.Replace(EscapedColon, EscapedColonPlaceholder);
+        
+        // Split only at unescaped :
+        List<string> parts = inkLine.Split(SpeakerSeparator).ToList();
+
+        string speaker;
+        string text;
+        
+        switch (parts.Count)
+        {
+            case 1:
+                speaker = null;
+                text = parts[0];
+                break;
+            case 2:
+                speaker = parts[0];
+                text = parts[1];
+                break;
+            default:
+                Debug.LogWarning($"Ink dialogue line was split at more {SpeakerSeparator} than expected." +
+                                 $" Please make sure to use {EscapedColon} for {SpeakerSeparator} inside text.");
+                goto case 2;
+        }
+
+        DialogueLine line = new DialogueLine();
+        line.speaker = speaker?.Trim();
+        // Replace $ back to : for display on the UI.
+        line.text = text.Replace(EscapedColonPlaceholder, SpeakerSeparator).Trim();
+
+        if (tags.Contains("thought"))
+        {
+            line.text = $"<i>{line.text}</i>";
+        }
+
+        return line;
+    }
 
     private bool CanContinue()
     {
@@ -161,6 +215,11 @@ public class DialogueController : MonoBehaviour
             default:
                 throw new ArgumentOutOfRangeException(nameof(type), type, null);
         }
+    }
+
+    private void Unity_Event(string eventName)
+    {
+        InkEvent?.Invoke(eventName);
     }
 
     #endregion

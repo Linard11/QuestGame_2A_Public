@@ -56,7 +56,10 @@ public class DialogueBox : MonoBehaviour
 
     public void DisplayText(DialogueLine dialogueLine)
     {
-        // TODO Set dialogueSpeaker
+        if (dialogueLine.speaker != null)
+        {
+            dialogueSpeaker.SetText(dialogueLine.speaker);
+        }
         dialogueText.SetText(dialogueLine.text);
         
         // Read out other information such as speaker images.
