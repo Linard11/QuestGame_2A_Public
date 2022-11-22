@@ -32,6 +32,7 @@ Robot: Thanks for the info!
 = island_follow_up
 Duckmen: Did you already check out the island?
 Just head over to the bridge and press the button.
+
 -> END
 
 
