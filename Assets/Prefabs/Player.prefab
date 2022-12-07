@@ -919,6 +919,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stepSound: {fileID: 8858087546728112928}
   landSound: {fileID: 5758148154444121120}
+  stepSoundParameterName: surface
+  defaultStepSoundPhysicMaterial: {fileID: 13400000, guid: e97a191daa9294c69bac55553ca69800,
+    type: 2}
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 1
   onStep:
     m_PersistentCalls:
       m_Calls: []
