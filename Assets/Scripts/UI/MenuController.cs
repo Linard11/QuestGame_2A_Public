@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using UnityEditor;
@@ -8,6 +9,9 @@ using UnityEngine.SceneManagement;
 
 public class MenuController : MonoBehaviour
 {
+    public static event Action BaseMenuOpening;
+    public static event Action BaseMenuClosed;
+    
     #region Inspector
 
     [SerializeField] private string startScene = "Scenes/Sandbox";
@@ -17,6 +21,9 @@ public class MenuController : MonoBehaviour
 
     [Tooltip("Prevent the base menu from being closed. E.g. in the main menu.")]
     [SerializeField] private bool preventBaseClosing;
+
+    [Tooltip("Hides the previously open menu when opening a new menu on-top.")]
+    [SerializeField] private bool hidePreviousMenu;
     
     #endregion
 
@@ -33,6 +40,9 @@ public class MenuController : MonoBehaviour
         input.UI.GoBackMenu.performed += GoBackMenu;
 
         openMenus = new Stack<Menu>();
+        
+        // Reset timescale on scene start.
+        Time.timeScale = 1;
     }
 
     private void Start()
@@ -87,6 +97,16 @@ public class MenuController : MonoBehaviour
 
     public void OpenMenu(Menu menu)
     {
+        if (menu == baseMenu)
+        {
+            BaseMenuOpening?.Invoke();
+        }
+
+        if (hidePreviousMenu && openMenus.Count > 0)
+        {
+            openMenus.Peek().Hide();
+        }
+        
         menu.Open();
         // Add menu to the stack.
         openMenus.Push(menu);
@@ -107,6 +127,16 @@ public class MenuController : MonoBehaviour
         // Remove top most menu from the stack.
         Menu closingMenu = openMenus.Pop();
         closingMenu.Close();
+
+        if (hidePreviousMenu && openMenus.Count > 0)
+        {
+            openMenus.Peek().Show();
+        }
+
+        if (closingMenu == baseMenu)
+        {
+            BaseMenuClosed?.Invoke();
+        }
     }
 
     private void ToggleMenu(InputAction.CallbackContext _)

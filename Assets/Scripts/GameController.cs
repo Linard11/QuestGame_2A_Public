@@ -1,10 +1,13 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
 {
     private PlayerController player;
 
     private DialogueController dialogueController;
+
+    private MenuController menuController;
     
     #region Unity Event Functions
 
@@ -21,13 +24,23 @@ public class GameController : MonoBehaviour
 
         if (dialogueController == null)
         {
-            Debug.LogError("No dialogueController found in scene.", this);
+            Debug.LogError("No DialogueController found in scene.", this);
+        }
+        
+        menuController = FindObjectOfType<MenuController>();
+
+        if (menuController == null)
+        {
+            Debug.LogError("No MenuController found in scene.", this);
         }
     }
 
     private void OnEnable()
     {
         DialogueController.DialogueClosed += EndDialogue;
+
+        MenuController.BaseMenuOpening += EnterPauseMode;
+        MenuController.BaseMenuClosed += EnterPlayMode;
     }
 
     private void Start()
@@ -38,6 +51,9 @@ public class GameController : MonoBehaviour
     private void OnDisable()
     {
         DialogueController.DialogueClosed -= EndDialogue;
+        
+        MenuController.BaseMenuOpening -= EnterPauseMode;
+        MenuController.BaseMenuClosed -= EnterPlayMode;
     }
 
     #endregion
@@ -46,21 +62,35 @@ public class GameController : MonoBehaviour
 
     public void EnterPlayMode()
     {
+        Time.timeScale = 1;
         // In the editor: Unlock with ESC.
         Cursor.lockState = CursorLockMode.Locked;
         player.EnableInput();
+        menuController.enabled = true;
     }
 
     public void EnterDialogueMode()
     {
+        Time.timeScale = 1;
         Cursor.lockState = CursorLockMode.None;
         player.DisableInput();
+        menuController.enabled = false;
     }
 
     public void EnterCutsceneMode()
     {
+        Time.timeScale = 1;
         Cursor.lockState = CursorLockMode.Locked;
         player.DisableInput();
+        menuController.enabled = false;
+    }
+
+    public void EnterPauseMode()
+    {
+        Time.timeScale = 0;
+        Cursor.lockState = CursorLockMode.None;
+        player.DisableInput();
+        menuController.enabled = true;
     }
 
     #endregion

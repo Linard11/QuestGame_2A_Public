@@ -1,5 +1,7 @@
 using System.Collections;
 
+using DG.Tweening;
+
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -66,6 +68,18 @@ public class Menu : MonoBehaviour
         
         gameObject.SetActive(false);
         // TODO DOTween animations
+    }
+
+    public void Show()
+    {
+        gameObject.SetActive(true);
+        // TODO DOTween animations
+    }
+
+    public void Hide()
+    {
+        // TODO DOTween animations
+        gameObject.SetActive(false);
     }
 
     private IEnumerator DelayedSelect(Selectable newSelection)
