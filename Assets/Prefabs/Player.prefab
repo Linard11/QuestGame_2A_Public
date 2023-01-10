@@ -251,6 +251,7 @@ GameObject:
   - component: {fileID: 2040972240544980285}
   - component: {fileID: 3981192760797128751}
   - component: {fileID: 4171445145114719216}
+  - component: {fileID: 3467430534340314679}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -320,11 +321,24 @@ MonoBehaviour:
   verticalCameraRotationMax: 70
   cameraHorizontalSpeed: 200
   cameraVerticalSpeed: 130
-  mouseCameraSensitivity: 1
-  controllerCameraSensitivity: 1
-  invertY: 1
   animator: {fileID: 2184565597911520026}
   coyoteTime: 0.2
+--- !u!208 &3467430534340314679
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5014096773566184314}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 0
+  m_Extents: {x: 0.375, y: 0.9, z: 0.375}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 0.9, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1 &6835418666675475257
 GameObject:
   m_ObjectHideFlags: 0
